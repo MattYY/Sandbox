@@ -23,7 +23,7 @@ public struct Sandbox: CustomStringConvertible {
     //// Although any file attribute can be applied to any sandbox directory using
     ///  NSFileManager's setAttributes method at any time outside of this API the file protection
     ///  options are specifically elevated to encourage security best practices.
-    public enum FileProtection : String {
+    public enum FileProtection: String {
         /// No file protection
         case None
         /// NSFileProtectionComplete: Files are protected ten seconds after the device is locked.
@@ -31,7 +31,7 @@ public struct Sandbox: CustomStringConvertible {
         /// NSFileProtectionCompleteUnlessOpen: Files are protected ten seconds after the device
         /// is locked unless they’re currently open
         case CompleteUnlessOpen
-        /// NSFileProtectionCompleteUntilFirstAuthentication: Files are protected only between 
+        /// NSFileProtectionCompleteUntilFirstAuthentication: Files are protected only between
         /// the time the device boots and the first time the user unlocks the device.
         case CompleteUntilFirstAuthentication
     }
@@ -62,8 +62,20 @@ public struct Sandbox: CustomStringConvertible {
 //MARK: - Initializers -
 /// Initializers
 extension Sandbox {
-    /// Creates a system folder at the specified `baseDirectory`/`name` location.
-    /// If directory creation fails this will throw a `DirectoryCreationError`.
+    /// Creates a system folder at the specified `baseDirectory`/`name` location. If directory
+    /// creation fails this will throw a `DirectoryCreationError`.
+    ///
+    /// - parameter baseDirectory: A Valid `NSSearchPathDirectory`
+    ///
+    /// - parameter name: The name of a subdirectory in which the backing plist will be stored.
+    ///                   This value is appended to the baseDirectory path when constructing
+    ///                   the sandbox `path` and `url`.
+    ///
+    /// - parameter fileProtection: Defaults to `Complete`.  Determines the method of file
+    ///                             encryption for the sandbox directory.  Corresponds with
+    ///                             `NSFileProtection` options.
+    ///
+    /// - throws: An error associated with creating the underlying sandbox directory.
     public init(baseDirectory: NSSearchPathDirectory, name: String, fileProtection: FileProtection = .Complete) throws {
         self.name = name
         self.directory = baseDirectory
@@ -79,16 +91,34 @@ extension Sandbox {
     }
     
     /// Convenience initializer for creating a sandbox in the `DocumentDirectory`
+    ///
+    /// - parameter name: See base initializer documentation
+    ///
+    /// - parameter fileProtection: See base initializer documentation
+    ///
+    /// - throws: See base initializer documentation
     public init(inDocumentsWithName name: String, fileProtection: FileProtection = .Complete) throws {
         try self.init(baseDirectory: .DocumentDirectory, name: name, fileProtection: fileProtection)
     }
     
     /// Convenience initializer for creating a sandbox in the `ApplicationSupportDirectory`
+    ///
+    /// - parameter name: See base initializer documentation
+    ///
+    /// - parameter fileProtection: See base initializer documentation
+    ///
+    /// - throws: See base initializer documentation
     public init(inApplicationSupportWithName name: String, fileProtection: FileProtection = .Complete) throws {
         try self.init(baseDirectory: .ApplicationSupportDirectory, name: name, fileProtection: fileProtection)
     }
     
     /// Convenience initializer for creating a sandbox in the `CachesDirectory`
+    ///
+    /// - parameter name: See base initializer documentation
+    ///
+    /// - parameter fileProtection: See base initializer documentation
+    ///
+    /// - throws: See base initializer documentation
     public init(inCachesWithName name: String, fileProtection: FileProtection = .Complete) throws {
         try self.init(baseDirectory: .CachesDirectory, name: name, fileProtection: fileProtection)
     }
@@ -112,8 +142,9 @@ extension Sandbox {
         return baseURL.relativePath!
     }
     
-    /// Permanently removes the sandbox directory and everything in it so ¡BE CAREFUL! when
-    /// using this method.
+    /// Permanently removes the sandbox directory and everything in it so ¡BE CAREFUL!
+    ///
+    /// - throws: An error from NSFileManager's removeItemAtURL method.
     public func delete() throws {
         let fileManager = NSFileManager.defaultManager()
         do {
@@ -131,7 +162,7 @@ extension Sandbox {
 extension Sandbox {
     private func createDirectoryIfNecessary() throws {
         //Create the container if necessary
-        var error:NSError?
+        var error: NSError?
         if !url.checkResourceIsReachableAndReturnError(&error) {
             do {
                 try NSFileManager.defaultManager().createDirectoryAtURL(
